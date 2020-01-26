@@ -42,7 +42,28 @@ class OpenApiInfo(object):
 
 # Данные закрытого API
 class PrivateApiInfo(OpenApiInfo):
-    # TODO - дописать приватные параметры
+    # Количество здоровья
+    health: int = None
+    # Процент выполнения квеста 0-100
+    questProgress: int = None
+    # Процент опыта до следующего уровня 0-100
+    expProgress: int = None
+    # Количество праны 0-100
+    godPower: int = None
+    # Последняя запись в дневнике
+    diaryLast: str = None
+    # Город, в котором герой
+    townName: str = None
+    # Расстояние от столицы
+    distance: int = None
+    # Признак сражения на арене
+    arenaFight: bool = None
+    # Количество вещей в инвентаре
+    inventoryNum: int = None
+    # Название текущего квеста
+    questName: str = None
+    # Активируемые трофеи в инвентаре
+    activatables: List[str] = None
 
     def __init__(self):
         super(PrivateApiInfo, self).__init__()
