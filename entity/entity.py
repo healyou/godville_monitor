@@ -1,6 +1,20 @@
 from typing import List
 
 
+class Pet(object):
+    # Вид питомца
+    petClass: str = None
+    # Уровень питомца (пустая строка, если питомец лишился уровня)
+    petLevel: int = None
+    # Имя питомца
+    petName: str = None
+    # Флаг контузии питомца (есть только у контуженого)
+    wounded: bool = None
+
+    def __init__(self):
+        pass
+
+
 # Данные открытого API
 class OpenApiInfo(object):
     # Имя героя
@@ -35,6 +49,28 @@ class OpenApiInfo(object):
     inventory: List[str] = None
     # Приблизительное количество золота
     goldApprox: str = None
+    # Число собранных слов для книги (без слогов)
+    wordsCount: str = None
+    # Имя собранного в лаборатории босса
+    bossName: str = None
+    # Мощь собранного в лаборатории босса
+    bossPower: int = None
+    # Число собранных тварей женского пола (только у ковчеговладельцев)
+    arkFemaleCount: int = None
+    # Число собранных тварей мужского пола (только у ковчеговладельцев)
+    arkMaleCount: int = None
+    # Примерное число сбережений (только у храмовладельцев)
+    savings: str = None
+    # Уровень героя-торговца (только у лавочников)
+    traderLevel: int = None
+    # Дата окончания сбора пенсии (только у пенсионеров)
+    savingsCompletedAt: str = None
+    # Название лавки (только у пенсионеров)
+    shopName: str = None
+    # Дата окончания храма (только у храмовладельцев)
+    templeCompletedAt: str = None
+    # Количество поленьев (пока нет храма, ключ отсутствует)
+    woodCount: int = None
 
     def __init__(self):
         pass
@@ -64,6 +100,15 @@ class PrivateApiInfo(OpenApiInfo):
     questName: str = None
     # Активируемые трофеи в инвентаре
     activatables: List[str] = None
+    # Аура героя (без времени; отсутствует без ауры)
+    aura: str = None
+    # показатель неактуальности данных (ключ появляется, когда данные неактуальны)
+    expired: bool = None
+    # Тип боя ("sail" - морской поход, "arena" - арена (ЗПГ в том числе), "challenge" - тренировка, "dungeon" - подземелье, "range" - полигон
+    fightType: str = None
+    # Объект, содержащий описание питомца (подробности ниже)
+    pet: Pet = None
+
 
     def __init__(self):
         super(PrivateApiInfo, self).__init__()
