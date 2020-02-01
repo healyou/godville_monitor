@@ -1,4 +1,5 @@
 from typing import List
+from abc import ABCMeta
 
 
 class Pet(object):
@@ -15,8 +16,13 @@ class Pet(object):
         pass
 
 
+class IInfo(metaclass=ABCMeta):
+    def __init__(self) -> None:
+        pass
+
+
 # Данные открытого API
-class OpenApiInfo(object):
+class OpenApiInfo(IInfo):
     # Имя героя
     heroName: str = None
     # Имя бога
@@ -73,7 +79,7 @@ class OpenApiInfo(object):
     woodCount: int = None
 
     def __init__(self):
-        pass
+        super(IInfo, self).__init__()
 
 
 # Данные закрытого API
