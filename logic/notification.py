@@ -1,35 +1,11 @@
 from __future__ import annotations
+from .notification_items import NotificationItem
+from mapper.property_mappers import AbstractDictPropertyMapper, DefaultDictPropertyMapper, NoneObjectDictPropertyMapper
 from .observer import IEvent, IObserver, IObservable, LoadErrorEvent, LoadDataEvent, AbstractLoaderEvent
 from enum import Enum
 from entity.entity import IInfo
 from typing import List
-
-
-class NotificationItem(Enum):
-    # Имя героя heroName: str = None
-    HERO_NAME = 'heroName'
-    # Имя бога godName: str = None
-    GOD_NAME = 'godName'
-    # Пол gender: str = None
-    GENDER = 'gender'
-
-    # Формирование информационного сообщения по изменённому свойству
-    def configureChangeDisplayValue(item: NotificationItem, oldItem: IInfo, newItem: IInfo) -> str:
-        oldPropValue = getattr(oldItem, item.value)
-        newPropValue = getattr(newItem, item.value)
-
-        displayValue: str = None
-
-        if (item == NotificationItem.HERO_NAME):
-            displayValue = f'Изменилось имя героя с {oldPropValue} на {newPropValue}'
-        elif (item == NotificationItem.GOD_NAME):
-            displayValue = f'Изменилось имя бога с {oldPropValue} на {newPropValue}'
-        elif (item == NotificationItem.GENDER):
-            displayValue = f'Изменился пол героя с {oldPropValue} на {newPropValue}'
-        else:
-            raise Exception('Незвестное свойство')
-
-        return displayValue 
+from collections import namedtuple
 
 
 # Строитель уведомлений
@@ -38,12 +14,12 @@ class NotificationEventBuilder(object):
         self.__oldItem: IInfo = oldItem
         self.__newItem: IInfo = newItem
         # TODO - фильтр на уведомления
-        self.__notificationProps: List[str] = self.__configureNotificationProps()
+        self.__notificationItems: List[NotificationItem] = self.__configureNotificationProps()
 
-    def __configureNotificationProps(self) -> List[str]:
-        notificationProps: List[str] = []
+    def __configureNotificationProps(self) -> List[NotificationItem]:
+        notificationProps: List[NotificationItem] = []
         for item in NotificationItem:
-            notificationProps.append(item.value)
+            notificationProps.append(item)
         return notificationProps
 
     def build(self) -> List[NotificationEvent]:
@@ -51,14 +27,15 @@ class NotificationEventBuilder(object):
             return []
 
         notifications: List[NotificationEvent] = []
-        for notifPropName in self.__notificationProps:
+        for notifItem in self.__notificationItems:
+            notifPropName: str = notifItem.propertyName
             if hasattr(self.__oldItem, notifPropName):
                 oldPropValue = getattr(self.__oldItem, notifPropName)
                 newPropValue = getattr(self.__newItem, notifPropName)
 
+                # TODO - только изменённые свойства
                 if (oldPropValue == newPropValue):
-                    item: NotificationItem = NotificationItem(notifPropName)
-                    notifMessage = NotificationItem.configureChangeDisplayValue(item, self.__oldItem, self.__newItem)
+                    notifMessage = NotificationItem.configureChangeDisplayValue(notifItem, self.__oldItem, self.__newItem)
                     notifications.append(NotificationEvent(notifMessage))
 
         return notifications
@@ -76,7 +53,7 @@ class NotificationEvent(IEvent):
 # Запись уведомлений в консоль
 class ConsoleNotificationObserver(IObserver):
     def __init__(self):
-        pass
+        super(IObserver, self).__init__()
 
     def update(self, event: IEvent) -> None:
         if (isinstance(event, NotificationEvent)):
@@ -128,11 +105,11 @@ class NotificationObservableObserver(IObserver, IObservable):
         return notifications
 
     def __configureLoadErrorNotificationEvent(self, event: LoadErrorEvent) -> NotificationEvent:
-        message = f'Осуществлена загрузка данных в {event.loadDate}'
+        message = f'Ошибка загрузки данных в {event.loadDate}: {event.error}'
         return NotificationEvent(message)
 
     def __configureLoadDataNotificationEvent(self, event: LoadDataEvent) -> NotificationEvent:
-        message = f'Осуществлена загрузка данных в {event.loadDate}'
+        message = f'Осуществлена загрузка данных в {event.loadDate}: {event.info.__dict__}'
         return NotificationEvent(message)
 
     def __notifyNotifications(self, notifications: List[NotificationEvent]):
