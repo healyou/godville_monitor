@@ -60,7 +60,7 @@ class DataLoader(StoppedThread, IObservable):
             self.notifyObservers(loadDataEvent)
 
         except Exception as error:
-            loadErrorEvent: LoadErrorEvent = LoadErrorEvent(error)
+            loadErrorEvent: LoadErrorEvent = LoadErrorEvent(error, datetime.now())
             self.notifyObservers(loadErrorEvent)
 
     def __isLoadPrivateInfo(self) -> bool:

@@ -30,21 +30,29 @@ class IObservable(metaclass=ABCMeta):
                 observer.update(event)
 
 
-# Событие ошибки загрузки данных
-class LoadErrorEvent(IEvent):
-    error: Exception = None
+# Событие загрузки данных
+class AbstractLoaderEvent(metaclass=ABCMeta):
+    def __init__(self) -> None:
+        pass
 
-    def __init__(self, error: Exception):
-        super(IEvent, self).__init__()
+
+# Событие ошибки загрузки данных
+class LoadErrorEvent(AbstractLoaderEvent):
+    error: Exception = None
+    loadDate: datetime = None
+
+    def __init__(self, error: Exception, loadDate: datetime):
+        super(AbstractLoaderEvent, self).__init__()
         self.error = error
+        self.loadDate = loadDate
 
 
 # Событие загрузки данных
-class LoadDataEvent(IEvent):
+class LoadDataEvent(AbstractLoaderEvent):
     info: IInfo = None
     loadDate: datetime = None
 
     def __init__(self, info: IInfo, loadDate: datetime):
-        super(IEvent, self).__init__()
+        super(AbstractLoaderEvent, self).__init__()
         self.info = info
         self.loadDate = loadDate
