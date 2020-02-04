@@ -1,10 +1,5 @@
-from service.service import GodvilleApiService
-from entity.entity import OpenApiInfo, PrivateApiInfo
+from ui.application import Application
 
 
-service = GodvilleApiService()
-openApiInfo: OpenApiInfo = service.loadOpenInfo('God name')
-print(openApiInfo.__dict__)
-
-privateApiInfo: PrivateApiInfo = service.loadPrivateInfo('God name', 'key')
-print(privateApiInfo.__dict__)
+app = Application()
+app.run()

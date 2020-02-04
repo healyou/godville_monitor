@@ -19,7 +19,7 @@ class StoppedThread(Thread):
         self.__stop.set()
   
     # see isAlive для проверки выполнения работы потока
-    def isStopped(self): 
+    def isStopped(self) -> bool: 
         return self.__stop.isSet()
 
     def run(self):
