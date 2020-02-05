@@ -8,29 +8,42 @@ from .observer import IEvent, IObserver, IObservable, LoadErrorEvent, LoadDataEv
 
 # Поток, запускающий выполнение функции через каждый n секунд после очередного запуска
 # Возможно завершение работы потока - завершит работу после последней операции
-class StoppedThread(Thread):
+class StoppedThread(object):
     def __init__(self, rerun_seconds: int = 60):
-        Thread.__init__(self)
-        self.daemon: bool = True
         self.__stop = Event() 
         self._rerun_seconds = rerun_seconds
+        self.__timer: Timer = None
 
     def stop(self):
-        self.__stop.set()
+        if (self.__timer is not None):
+            self.__timer.cancel()
+            self.__stop.set()
   
     # see isAlive для проверки выполнения работы потока
     def isStopped(self) -> bool: 
         return self.__stop.isSet()
 
-    def run(self):
-        # Первый запуск сразу
-        if (not self.isStopped()):
-            Thread(daemon=True, target=self.stoppedRun).run()
+    def start(self):
+        # Первый раз сразу отрабатываем и запускаем таймер
+        self.stoppedRun()
+        self.__runTimer()
 
-        # Остальные запуски, пока не завершим поток
-        while not self.isStopped():
+    def __runTimer(self):
+        # таймер отрабатает через n секунд и вызывает функцию, которая снова запустит таймер
+        if (not self.isStopped()):
             # Через n секунду начнёт выполнять снова
-            Timer(interval=self._rerun_seconds, function=self.stoppedRun).run()
+            self.__timer = Timer(self._rerun_seconds, self.__run)
+            self.__timer.start()
+
+    def __run(self):
+        # Выполняет функцию и перезапускает таймер
+        self.__runTimer()
+        self.stoppedRun()
+
+    def stop(self):
+        if (self.__timer is not None):
+            self.__timer.cancel()
+            self.__stop.clear()
 
     @abstractmethod
     def stoppedRun():
@@ -64,5 +77,5 @@ class DataLoader(StoppedThread, IObservable):
             self.notifyObservers(loadErrorEvent)
 
     def __isLoadPrivateInfo(self) -> bool:
-        return self.__token is not None
+        return self.__token not in (None, '')
 

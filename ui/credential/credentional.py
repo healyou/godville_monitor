@@ -72,5 +72,5 @@ class CredentionalPresenter(ICredentionalPresenter):
             Session.get().authenticate(godName)
             self.__view.showInfoView(True)
         else:
-            Session.get().authenticate(token)
+            Session.get().authenticate(godName, token)
             self.__view.showInfoView(False)

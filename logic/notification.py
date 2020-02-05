@@ -1,44 +1,18 @@
 from __future__ import annotations
-from .notification_items import NotificationItem
-from mapper.property_mappers import AbstractDictPropertyMapper, DefaultDictPropertyMapper, NoneObjectDictPropertyMapper
-from .observer import IEvent, IObserver, IObservable, LoadErrorEvent, LoadDataEvent, AbstractLoaderEvent
-from enum import Enum
-from entity.entity import IInfo
-from typing import List
+
 from collections import namedtuple
+from enum import Enum
+from typing import List
 
+from entity.entity import IInfo, OpenApiInfo, PrivateApiInfo
+from mapper.property_mappers import (AbstractDictPropertyMapper,
+                                     DefaultDictPropertyMapper,
+                                     NoneObjectDictPropertyMapper)
 
-# Строитель уведомлений
-class NotificationEventBuilder(object):
-    def __init__(self, oldItem: IInfo, newItem: IInfo):
-        self.__oldItem: IInfo = oldItem
-        self.__newItem: IInfo = newItem
-        # TODO - фильтр на уведомления
-        self.__notificationItems: List[NotificationItem] = self.__configureNotificationProps()
-
-    def __configureNotificationProps(self) -> List[NotificationItem]:
-        notificationProps: List[NotificationItem] = []
-        for item in NotificationItem:
-            notificationProps.append(item)
-        return notificationProps
-
-    def build(self) -> List[NotificationEvent]:
-        if (type(self.__oldItem) is not type(self.__newItem)):
-            return []
-
-        notifications: List[NotificationEvent] = []
-        for notifItem in self.__notificationItems:
-            notifPropName: str = notifItem.propertyName
-            if hasattr(self.__oldItem, notifPropName):
-                oldPropValue = getattr(self.__oldItem, notifPropName)
-                newPropValue = getattr(self.__newItem, notifPropName)
-
-                # TODO - только изменённые свойства
-                if (oldPropValue == newPropValue):
-                    notifMessage = NotificationItem.configureChangeDisplayValue(notifItem, self.__oldItem, self.__newItem)
-                    notifications.append(NotificationEvent(notifMessage))
-
-        return notifications
+from .filter import GuiPropNotificationFilter, UserPropNotificationFilter
+from .notification_items import NotificationItem
+from .observer import (AbstractLoaderEvent, IEvent, IObservable, IObserver,
+                       LoadDataEvent, LoadErrorEvent)
 
 
 # Событие создания уведомления
@@ -48,6 +22,50 @@ class NotificationEvent(IEvent):
     def __init__(self, message: str):
         super(IEvent, self).__init__()
         self.message = message
+
+
+class ChangePropertiesNotificationEvent(IEvent):
+    notificationItem: NotificationItem = None
+    oldValue: object = None
+    newValue: object = None
+
+    def __init__(self, notificationItem: NotificationItem, oldValue: object, newValue: object):
+        super(IEvent, self).__init__()
+        self.notificationItem = notificationItem
+        self.oldValue = oldValue
+        self.newValue = newValue
+
+
+# Строитель уведомлений
+class NotificationEventBuilder(object):
+    def __init__(self, oldItem: IInfo, newItem: IInfo):
+        self.__oldItem: IInfo = oldItem
+        self.__newItem: IInfo = newItem
+        self.__guiNotificationFilter: GuiPropNotificationFilter = GuiPropNotificationFilter.get()
+        self.__userPropNotificationfilter: UserPropNotificationFilter = UserPropNotificationFilter.get()
+
+    def build(self) -> List[NotificationEvent]:
+        if (type(self.__oldItem) is not type(self.__newItem)):
+            return []
+
+        notifications: List[NotificationEvent] = []
+        for notifItem in NotificationItem:
+            notifPropName: str = notifItem.propertyName
+            if hasattr(self.__oldItem, notifPropName):
+                oldPropValue = getattr(self.__oldItem, notifPropName)
+                newPropValue = getattr(self.__newItem, notifPropName)
+
+                # TODO - только изменённые свойства
+                if (oldPropValue == newPropValue):
+                    if (self.__guiNotificationFilter.isNotificationCreate(notifItem)):
+                        event: ChangePropertiesNotificationEvent = ChangePropertiesNotificationEvent(notifItem, oldPropValue, newPropValue)
+                        notifications.append(event)
+
+                    if (self.__userPropNotificationfilter.isNotificationCreate(notifItem)):
+                        notifMessage = NotificationItem.configureChangeDisplayValue(notifItem, self.__oldItem, self.__newItem)
+                        notifications.append(NotificationEvent(notifMessage))
+
+        return notifications
 
 
 # Запись уведомлений в консоль
@@ -68,6 +86,15 @@ class NotificationObservableObserver(IObserver, IObservable):
         self.__oldLoadInfo: IInfo = None
         self.__newLoadInfo: IInfo = None
 
+        from logic.session import Session
+        session: Session = Session.get()
+        lastLoadData: LoadDataEvent = session.getLastLoadData()
+        if (lastLoadData is not None):
+            if (session.isLoadPrivateInfo() and isinstance(lastLoadData.info, PrivateApiInfo)):
+                self.__oldLoadInfo = lastLoadData.info
+            elif (not session.isLoadPrivateInfo() and isinstance(lastLoadData.info, OpenApiInfo)):
+                self.__oldLoadInfo = lastLoadData.info
+
     def update(self, event: IEvent) -> None:
         if (not isinstance(event, AbstractLoaderEvent)):
             return
@@ -79,9 +106,14 @@ class NotificationObservableObserver(IObserver, IObservable):
         notifications: List[NotificationEvent] = []
 
         if (isinstance(event, LoadErrorEvent)):
+            notifications.append(event)
             notifications.append(self.__configureLoadErrorNotificationEvent(event))
 
         elif (isinstance(event, LoadDataEvent)):
+            from logic.session import Session
+            Session.get().setLastLoadData(event)
+
+            notifications.append(event)
             loadDataEvent: LoadDataEvent = event
             loadInfo: IInfo = loadDataEvent.info
 
@@ -109,7 +141,13 @@ class NotificationObservableObserver(IObserver, IObservable):
         return NotificationEvent(message)
 
     def __configureLoadDataNotificationEvent(self, event: LoadDataEvent) -> NotificationEvent:
-        message = f'Осуществлена загрузка данных в {event.loadDate}: {event.info.__dict__}'
+        isPrivateInfo: bool = isinstance(event.info, PrivateApiInfo)
+        openMessage: str = None
+        if (isPrivateInfo):
+            openMessage = 'закрытых'
+        else:
+            openMessage = 'открытых'
+        message = f'Осуществлена загрузка {openMessage} данных в {event.loadDate}: {event.info.__dict__}'
         return NotificationEvent(message)
 
     def __notifyNotifications(self, notifications: List[NotificationEvent]):
