@@ -81,14 +81,24 @@ class InfoPresenter(IInfoPresenter, IObserver):
         IObserver.__init__(self)
         self.__view = view
 
+        self.__firstNotif: bool = True
+
     def backClick(self) -> None:
         Session.get().stopLoadData()
         self.__view.showCredentionalView()
 
     def update(self, event: IEvent) -> None:
         if (isinstance(event, NotificationEvent)):
-            # TODO - уведомления должны отображаться в других местах
-            pass
+            event: NotificationEvent = event
+                
+            notifTitle: str = 'Godville следилка'
+            notifMessage: str = ''
+            for message in event.messages:
+                if notifMessage:
+                    notifMessage += '\n'
+                notifMessage += message
+            
+            Session.get().showNotification(notifTitle, notifMessage)    
 
         elif (isinstance(event, ChangePropertiesNotificationEvent)):
             changePropEvent: ChangePropertiesNotificationEvent = event

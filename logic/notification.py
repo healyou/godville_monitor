@@ -17,11 +17,11 @@ from .observer import (AbstractLoaderEvent, IEvent, IObservable, IObserver,
 
 # Событие создания уведомления
 class NotificationEvent(IEvent):
-    message: str = None
+    messages: List[str] = []
 
-    def __init__(self, message: str):
+    def __init__(self, messages: List[str]):
         super(IEvent, self).__init__()
-        self.message = message
+        self.messages = messages
 
 
 class ChangePropertiesNotificationEvent(IEvent):
@@ -49,6 +49,7 @@ class NotificationEventBuilder(object):
             return []
 
         notifications: List[NotificationEvent] = []
+        notificationMessages: List[str] = []
         for notifItem in NotificationItem:
             notifPropName: str = notifItem.propertyName
             if hasattr(self.__oldItem, notifPropName):
@@ -63,7 +64,10 @@ class NotificationEventBuilder(object):
 
                     if (self.__userPropNotificationfilter.isNotificationCreate(notifItem)):
                         notifMessage = NotificationItem.configureChangeDisplayValue(notifItem, self.__oldItem, self.__newItem)
-                        notifications.append(NotificationEvent(notifMessage))
+                        notificationMessages.append(notifMessage)
+
+        if notificationMessages:
+            notifications.append(NotificationEvent(notificationMessages))
 
         return notifications
 
@@ -75,7 +79,7 @@ class ConsoleNotificationObserver(IObserver):
 
     def update(self, event: IEvent) -> None:
         if (isinstance(event, NotificationEvent)):
-            print(event.message)
+            print(event.messages)
 
 
 # Обработчик уведомлений при загрузке данных, который передаёт уведомления далее
@@ -107,7 +111,7 @@ class NotificationObservableObserver(IObserver, IObservable):
 
         if (isinstance(event, LoadErrorEvent)):
             notifications.append(event)
-            notifications.append(self.__configureLoadErrorNotificationEvent(event))
+            # notifications.append(self.__configureLoadErrorNotificationEvent(event))
 
         elif (isinstance(event, LoadDataEvent)):
             from logic.session import Session
@@ -119,17 +123,17 @@ class NotificationObservableObserver(IObserver, IObservable):
 
             if (self.__oldLoadInfo is None):
                 self.__oldLoadInfo = loadInfo
-                notifications.append(self.__configureLoadDataNotificationEvent(event))
+                # notifications.append(self.__configureLoadDataNotificationEvent(event))
                 return notifications
 
             elif (self.__newLoadInfo is None):
                 self.__newLoadInfo = loadInfo
-                notifications.append(self.__configureLoadDataNotificationEvent(event))
+                # notifications.append(self.__configureLoadDataNotificationEvent(event))
 
             else:
                 self.__oldLoadInfo = self.__newLoadInfo
                 self.__newLoadInfo = loadInfo
-                notifications.append(self.__configureLoadDataNotificationEvent(event))
+                # notifications.append(self.__configureLoadDataNotificationEvent(event))
 
             propEvents: List[NotificationEvent] = self.__configureChangedPropertiesNotificationEvents(self.__oldLoadInfo, self.__newLoadInfo)
             notifications.extend(propEvents)
@@ -138,7 +142,7 @@ class NotificationObservableObserver(IObserver, IObservable):
 
     def __configureLoadErrorNotificationEvent(self, event: LoadErrorEvent) -> NotificationEvent:
         message = f'Ошибка загрузки данных в {event.loadDate}: {event.error}'
-        return NotificationEvent(message)
+        return NotificationEvent([message])
 
     def __configureLoadDataNotificationEvent(self, event: LoadDataEvent) -> NotificationEvent:
         isPrivateInfo: bool = isinstance(event.info, PrivateApiInfo)
@@ -148,7 +152,7 @@ class NotificationObservableObserver(IObserver, IObservable):
         else:
             openMessage = 'открытых'
         message = f'Осуществлена загрузка {openMessage} данных в {event.loadDate}: {event.info.__dict__}'
-        return NotificationEvent(message)
+        return NotificationEvent([message])
 
     def __notifyNotifications(self, notifications: List[NotificationEvent]):
         for event in notifications:

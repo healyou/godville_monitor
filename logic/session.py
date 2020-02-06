@@ -4,6 +4,7 @@ from logic.observer import IObserver
 from logic.notification import NotificationObservableObserver, ConsoleNotificationObserver, LoadDataEvent
 from typing import List
 from copy import deepcopy
+from win10toast import ToastNotifier
 
 
 class Session(object):
@@ -11,6 +12,7 @@ class Session(object):
     __godName: str = None
     __token: str = None
     __lastLoadDataEvent: LoadDataEvent = None
+    __win10toaster = ToastNotifier()
     # TODO - надо сохранять последнюю загруженную информацию для отображения
 
     def __init__(self):
@@ -40,6 +42,10 @@ class Session(object):
 
     def isLoadPrivateInfo(self) -> bool:
         return self.__token not in (None, '')
+
+    def showNotification(self, title: str, message: str) -> None:
+        if not self.__win10toaster.notification_active():
+            self.__win10toaster.show_toast(title, message, duration=60, threaded=True)
 
     def startLoadData(self, observers: IObserver) -> None:
         if (self.__loader is None):

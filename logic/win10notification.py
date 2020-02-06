@@ -1,0 +1,2 @@
+class NotificationManager(object):
+    pass
