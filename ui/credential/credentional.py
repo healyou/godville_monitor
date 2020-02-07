@@ -41,6 +41,9 @@ class CredentionalView(ICredentionalView):
         enterButton = Button(text='Вход', command=self.__enterCredentional)
         enterButton.place(relx=.5, rely=.6, anchor='c')
 
+        enterButton = Button(text='Настройки', command=self.showSettingsView)
+        enterButton.place(relx=.5, rely=.7, anchor='c')
+
     def __clearChildrens(self):
         for widget in self.__root.winfo_children():
             widget.destroy()
@@ -53,6 +56,10 @@ class CredentionalView(ICredentionalView):
     def showInfoView(self, openInfo: bool) -> None:
         from ui.info.info import InfoView
         InfoView(self.__root)
+
+    def showSettingsView(self) -> None:
+        from ui.settings.settings import SettingsView
+        SettingsView(self.__root)
 
     def showCredentionalError(self, message: str) -> None:
         self.__errorLabel.config(text=message)

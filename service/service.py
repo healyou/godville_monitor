@@ -1,3 +1,4 @@
+from __future__ import annotations
 import requests
 import json
 from entity.entity import OpenApiInfo, PrivateApiInfo
@@ -10,6 +11,9 @@ class GodvilleApiService(object):
 
     GODVILLE_OPEN_API_URL = f'https://godville.net/gods/api/{GODNAME_PARAM_KEY}'
     GODVILLE_PRIVATE_API_URL = f'https://godville.net/gods/api/{GODNAME_PARAM_KEY}/{TOKEN_PARAM_KEY}'
+
+    def get() -> GodvilleApiService:
+        return GodvilleApiService()
 
     # Реализация одиночки
     def __new__(cls):

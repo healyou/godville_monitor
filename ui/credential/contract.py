@@ -13,6 +13,9 @@ class ICredentionalView(metaclass=ABCMeta):
     def showInfoView(self, openInfo: bool) -> None:
         pass
     @abstractmethod
+    def showSettingsView(self) -> None:
+        pass
+    @abstractmethod
     def showCredentionalError(self, message: str) -> None:
         pass
 
