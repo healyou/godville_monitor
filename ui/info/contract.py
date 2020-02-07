@@ -14,11 +14,9 @@ class IInfoView(metaclass=ABCMeta):
     @abstractmethod
     def showCredentionalView(self) -> None:
         pass
-
     @abstractmethod
     def showChangedPropertiesInfo(self, item: NotificationItem, value: str) -> None:
         pass
-
     @abstractmethod
     def showLoadDataInfo(self, message: str) -> None:
         pass
@@ -31,7 +29,6 @@ class IInfoPresenter(metaclass=ABCMeta):
     @abstractmethod
     def backClick(self) -> None:
         pass
-
     @abstractmethod
     def afterInitView(self) -> None:
         pass
