@@ -71,6 +71,12 @@ class NotificationItem(Enum):
     FIGHT_TYPE = NotificationProperty('fightType', 'fight_type', DefaultDictPropertyMapper(), False, 'description')
     PET = NotificationProperty('pet', 'pet', NoneObjectDictPropertyMapper(), False, 'description')
 
+    def getByPropertyName(propertyName: str) -> NotificationItem:
+        for item in NotificationItem:
+            if item.propertyName == propertyName:
+                return item
+        raise Exception('Элемент не найден')
+
     # TODO - вынести куда-нибудь формирование текста для уведомления по изменённому свойству
     # Формирование информационного сообщения по изменённому свойству
     def configureChangeDisplayValue(item: NotificationItem, oldItem: IInfo, newItem: IInfo) -> str:

@@ -35,7 +35,7 @@ class SettingsView(ISettingsView):
 
         i: int = 1
         # TODO - все настройки можно редактировать
-        for notifItem in [NotificationItem.GOD_NAME, NotificationItem.HERO_NAME]:
+        for notifItem in [NotificationItem.GOD_NAME, NotificationItem.HERO_NAME, NotificationItem.HEALTH]:
             frame = Frame(master=self.__frame, bd=1, relief=SUNKEN)
             frame.pack(side=TOP, fill=X, expand=True)
 
@@ -45,6 +45,7 @@ class SettingsView(ISettingsView):
             settingCheckBox = Checkbutton(master=frame, text=notifItem.propertyName, variable=settingVar, onvalue=True, offvalue=False)
             settingCheckBox.pack(side=TOP, padx=5)
             self.__checkSettingBooleanVars[notifItem] = settingVar
+            # TODO - приватное или открытое свойство
             i += 1
 
         enterButton = Button(master=self.__frame, text='Назад', command=self.__onBackClick)
@@ -106,8 +107,9 @@ class SettingsPresenter(ISettingsPresenter):
     def saveSettinsClick(self, settings: List[ISetting]) -> None:
         try:
             SettingsService.get().saveSettings(settings)
-            savedSettings: List[ISetting] = SettingsService.get().loadSettings()
-            self.__view.showSettings(savedSettings)
-            self.__view.showMessage(f'Настройки успешно сохранены: {str(datetime.now())}')
+            # savedSettings: List[ISetting] = SettingsService.get().loadSettings()
+            # self.__view.showSettings(savedSettings)
+            # self.__view.showMessage(f'Настройки успешно сохранены: {str(datetime.now())}')
+            self.__view.showCredentionalView()
         except Exception as err:
             self.__view.showMessage(f'Ошибка сохранения настроек: {str(err)}')

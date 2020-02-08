@@ -14,7 +14,8 @@ class AbstractPropertiesNotificationFilter(metaclass=ABCMeta):
         pass
 
 
-def getAvailablenotificationItems(items: List[NotificationItem]) -> List[NotificationItem]:
+# Получить параметры относительно того, что можно грузить пользователю
+def getAvailablePrivateOrOpenInfo(items: List[NotificationItem]) -> List[NotificationItem]:
     from .session import Session
     loadPrivateInfo: bool = Session.get().isLoadPrivateInfo()
     if (loadPrivateInfo):
@@ -25,6 +26,7 @@ def getAvailablenotificationItems(items: List[NotificationItem]) -> List[Notific
             if item.isOpenInfo:
                 availableItems.append(item)
         return availableItems
+
 
 # Изменения свойст, для которых надо создавать уведомления
 class GuiPropNotificationFilter(AbstractPropertiesNotificationFilter):
@@ -63,17 +65,11 @@ class GuiPropNotificationFilter(AbstractPropertiesNotificationFilter):
         return item in self.getAvailablenotificationItems()
 
     def getAvailablenotificationItems(self) -> List[NotificationItem]:
-        return getAvailablenotificationItems(self.__notificationItems)
+        return getAvailablePrivateOrOpenInfo(self.__notificationItems)
 
 
 # Фильтр изменения свойст, которые увидит пользователь
 class UserPropNotificationFilter(AbstractPropertiesNotificationFilter):
-    # TODO - multitheading list
-    __notificationItems: List[NotificationItem] = [
-        NotificationItem.GOD_NAME,
-        NotificationItem.HEALTH
-    ]
-
     def get() -> UserPropNotificationFilter:
         return UserPropNotificationFilter()
 
@@ -90,4 +86,18 @@ class UserPropNotificationFilter(AbstractPropertiesNotificationFilter):
         return item in self.getAvailablenotificationItems()
 
     def getAvailablenotificationItems(self) -> List[NotificationItem]:
-        return getAvailablenotificationItems(self.__notificationItems)
+        notificationItems: List[NotificationItem] = self.__getUserSavedNotificationItems()
+        return getAvailablePrivateOrOpenInfo(notificationItems)
+
+    # Получить свойства, которые нужны для уведомлений пользователю (сохранены пользвателем)
+    def __getUserSavedNotificationItems(self):
+        from service.settings import SettingsService
+        from entity.settings import ISetting, NotificationPropertySetting
+        # TODO - т.к. это просто фильтр, то настройки надо грузить не из файла, а из другого места
+        settings: List[ISetting] = SettingsService.get().loadSettings()
+        availableItems: List[NotificationItem] = []
+        for setting in settings:
+            if isinstance(setting, NotificationPropertySetting):
+                if setting.notify:
+                    availableItems.append(setting.item)
+        return availableItems

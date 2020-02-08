@@ -132,4 +132,4 @@ dmypy.json
 .vscode/
 
 # project files
-notificationSettings.pkl
+notificationSettings.txt
