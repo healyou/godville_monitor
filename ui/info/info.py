@@ -27,15 +27,11 @@ class InfoView(IInfoView):
     def __initFrame(self):
         self.__clearChildrens()
 
-        # scrolledFrame = VerticalScrolledFrame(self.__root)
-        # self.__frame = scrolledFrame.interior
-        # TODO добавить скролл
         self.__frame = Frame(master=self.__root, bd=1, relief=SUNKEN)
         self.__frame.pack(fill=BOTH, expand=True, padx=5, pady=5)
-        #self.__frame.grid(row=0, column=0)
 
-        self.__loadDataLabel = Label(master=self.__frame, text='Ещё не было загрузки данных')
-        self.__loadDataLabel.pack(side=TOP, padx=5, pady=5)
+        self.__loadDataLabel = Label(master=self.__root, text='Ещё не было загрузки данных')
+        self.__loadDataLabel.pack(side=TOP,  fill=BOTH, expand=True, padx=5, pady=5)
 
         i: int = 1
         propFilter: GuiPropNotificationFilter = GuiPropNotificationFilter.get()

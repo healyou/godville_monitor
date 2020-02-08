@@ -5,6 +5,7 @@ from logic.notification import NotificationObservableObserver, ConsoleNotificati
 from typing import List
 from copy import deepcopy
 from win10toast import ToastNotifier
+from entity.settings import ISetting
 
 
 class Session(object):
@@ -13,7 +14,7 @@ class Session(object):
     __token: str = None
     __lastLoadDataEvent: LoadDataEvent = None
     __win10toaster = ToastNotifier()
-    # TODO - надо сохранять последнюю загруженную информацию для отображения
+    __userSettings: List[ISetting] = []
 
     def __init__(self):
         pass
@@ -65,6 +66,12 @@ class Session(object):
         if (self.__loader is not None):
             self.__loader.stop()
             self.__loader = None
+
+    def setUserSettigns(self, settings: List[ISetting]) -> Mone:
+        self.__userSettings = settings
+    
+    def getUserSettings(self) -> List[ISetting]:
+        return self.__userSettings
 
     def quit(self) -> None:
         self.stopLoadData()

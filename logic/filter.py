@@ -30,8 +30,6 @@ def getAvailablePrivateOrOpenInfo(items: List[NotificationItem]) -> List[Notific
 
 # Изменения свойст, для которых надо создавать уведомления
 class GuiPropNotificationFilter(AbstractPropertiesNotificationFilter):
-    # TODO - multitheading list
-    # TODO - приватная и открытая инфа отдельно
     __notificationItems: List[NotificationItem] = [
         NotificationItem.GOD_NAME, 
         NotificationItem.HERO_NAME,
@@ -91,10 +89,9 @@ class UserPropNotificationFilter(AbstractPropertiesNotificationFilter):
 
     # Получить свойства, которые нужны для уведомлений пользователю (сохранены пользвателем)
     def __getUserSavedNotificationItems(self):
-        from service.settings import SettingsService
+        from .session import Session
         from entity.settings import ISetting, NotificationPropertySetting
-        # TODO - т.к. это просто фильтр, то настройки надо грузить не из файла, а из другого места
-        settings: List[ISetting] = SettingsService.get().loadSettings()
+        settings: List[ISetting] = Session.get().getUserSettings()
         availableItems: List[NotificationItem] = []
         for setting in settings:
             if isinstance(setting, NotificationPropertySetting):

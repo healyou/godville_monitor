@@ -1,46 +1,91 @@
-from tkinter import *
+import tkinter as tk
 
 
-class VerticalScrolledFrame(Frame):
-    """A pure Tkinter scrollable frame that actually works!
-    * Use the 'interior' attribute to place widgets inside the scrollable frame
-    * Construct and pack/place/grid normally
-    * This frame only allows vertical scrolling
-
+class VerticalScrolledFrame:
     """
-    def __init__(self, parent, *args, **kw):
-        Frame.__init__(self, parent, *args, **kw)            
+    A vertically scrolled Frame that can be treated like any other Frame
+    ie it needs a master and layout and it can be a master.
+    :width:, :height:, :bg: are passed to the underlying Canvas
+    :bg: and all other keyword arguments are passed to the inner Frame
+    note that a widget layed out in this frame will have a self.master 3 layers deep,
+    (outer Frame, Canvas, inner Frame) so 
+    if you subclass this there is no built in way for the children to access it.
+    You need to provide the controller separately.
+    """
+    def __init__(self, master, **kwargs):
+        width = kwargs.pop('width', None)
+        height = kwargs.pop('height', None)
+        bg = kwargs.pop('bg', kwargs.pop('background', None))
+        self.outer = tk.Frame(master, **kwargs)
 
-        # create a canvas object and a vertical scrollbar for scrolling it
-        vscrollbar = Scrollbar(self, orient=VERTICAL)
-        vscrollbar.pack(fill=Y, side=RIGHT, expand=FALSE)
-        canvas = Canvas(self, bd=0, highlightthickness=0,
-                        yscrollcommand=vscrollbar.set)
-        canvas.pack(side=LEFT, fill=BOTH, expand=TRUE)
-        vscrollbar.config(command=canvas.yview)
+        self.vsb = tk.Scrollbar(self.outer, orient=tk.VERTICAL)
+        self.vsb.pack(fill=tk.Y, side=tk.RIGHT)
+        self.canvas = tk.Canvas(self.outer, highlightthickness=0, width=width, height=height, bg=bg)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.canvas['yscrollcommand'] = self.vsb.set
+        # mouse scroll does not seem to work with just "bind"; You have
+        # to use "bind_all". Therefore to use multiple windows you have
+        # to bind_all in the current widget
+        self.canvas.bind("<Enter>", self._bind_mouse)
+        self.canvas.bind("<Leave>", self._unbind_mouse)
+        self.vsb['command'] = self.canvas.yview
 
-        # reset the view
-        canvas.xview_moveto(0)
-        canvas.yview_moveto(0)
+        self.inner = tk.Frame(self.canvas, bg=bg)
+        # pack the inner Frame into the Canvas with the topleft corner 4 pixels offset
+        self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
+        self.inner.bind("<Configure>", self._on_frame_configure)
 
-        # create a frame inside the canvas which will be scrolled with it
-        self.interior = interior = Frame(canvas)
-        interior_id = canvas.create_window(0, 0, window=interior,
-                                           anchor=NW)
+        self.outer_attr = set(dir(tk.Widget))
 
-        # track changes to the canvas and frame width and sync them,
-        # also updating the scrollbar
-        def _configure_interior(event):
-            # update the scrollbars to match the size of the inner frame
-            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # update the canvas's width to fit the inner frame
-                canvas.config(width=interior.winfo_reqwidth())
-        interior.bind('<Configure>', _configure_interior)
+    def __getattr__(self, item):
+        if item in self.outer_attr:
+            # geometry attributes etc (eg pack, destroy, tkraise) are passed on to self.outer
+            return getattr(self.outer, item)
+        else:
+            # all other attributes (_w, children, etc) are passed to self.inner
+            return getattr(self.inner, item)
 
-        def _configure_canvas(event):
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # update the inner frame's width to fill the canvas
-                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
-        canvas.bind('<Configure>', _configure_canvas)
+    def _on_frame_configure(self, event=None):
+        x1, y1, x2, y2 = self.canvas.bbox("all")
+        height = self.canvas.winfo_height()
+        self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
+
+    def _bind_mouse(self, event=None):
+        self.canvas.bind_all("<4>", self._on_mousewheel)
+        self.canvas.bind_all("<5>", self._on_mousewheel)
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbind_mouse(self, event=None):
+        self.canvas.unbind_all("<4>")
+        self.canvas.unbind_all("<5>")
+        self.canvas.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event):
+        """Linux uses event.num; Windows / Mac uses event.delta"""
+        if event.num == 4 or event.delta > 0:
+            self.canvas.yview_scroll(-1, "units" )
+        elif event.num == 5 or event.delta < 0:
+            self.canvas.yview_scroll(1, "units" )
+
+#  **** SCROLL BAR TEST *****
+# if __name__ == "__main__":
+#     root = tk.Tk()
+#     root.title("Scrollbar Test")
+#     root.geometry('400x500')
+
+#     frame = VerticalScrolledFrame(root, 
+#         width=300, 
+#         borderwidth=2, 
+#         relief=tk.SUNKEN, 
+#         background="light gray")
+#     #frame.grid(column=0, row=0, sticky='nsew') # fixed size
+#     frame.pack(fill=tk.BOTH, expand=True) # fill window
+
+#     for i in range(30):
+#         label = tk.Label(frame, text="This is a label "+str(i))
+#         label.grid(column=1, row=i, sticky=tk.W)
+
+#         text = tk.Entry(frame, textvariable="text")
+#         text.grid(column=2, row=i, sticky=tk.W)
+
+#     root.mainloop()
