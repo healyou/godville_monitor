@@ -67,7 +67,10 @@ class NotificationEventBuilder(object):
                         notificationMessages.append(notifMessage)
 
         if notificationMessages:
+            event: NotificationEvent = NotificationEvent(notificationMessages)
             notifications.append(NotificationEvent(notificationMessages))
+            from service.notifications import NotificationService
+            NotificationService.get().addNotificationEventToHistory(event)
 
         return notifications
 

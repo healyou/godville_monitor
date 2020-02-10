@@ -85,16 +85,8 @@ class InfoPresenter(IInfoPresenter, IObserver):
 
     def update(self, event: IEvent) -> None:
         if (isinstance(event, NotificationEvent)):
-            event: NotificationEvent = event
-                
-            notifTitle: str = 'Godville следилка'
-            notifMessage: str = ''
-            for message in event.messages:
-                if notifMessage:
-                    notifMessage += '\n'
-                notifMessage += message
-            
-            Session.get().showNotification(notifTitle, notifMessage)    
+            # Уведомления сразу добавляются в сессию при создании
+            pass
 
         elif (isinstance(event, ChangePropertiesNotificationEvent)):
             changePropEvent: ChangePropertiesNotificationEvent = event

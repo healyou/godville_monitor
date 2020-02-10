@@ -1,7 +1,10 @@
 from abc import abstractmethod
 from threading import Thread, Event, Timer
 from datetime import datetime
+from win10toast import ToastNotifier
 from service.service import GodvilleApiService
+from logic.notification import NotificationEvent
+from service.notifications import NotificationService
 from entity.entity import PrivateApiInfo, OpenApiInfo, IInfo
 from .observer import IEvent, IObserver, IObservable, LoadErrorEvent, LoadDataEvent
 
@@ -79,3 +82,33 @@ class DataLoader(StoppedThread, IObservable):
     def __isLoadPrivateInfo(self) -> bool:
         return self.__token not in (None, '')
 
+
+# Отобрражение уведомлений
+class NotificationToaster(StoppedThread):
+    RERUN_SECONDS = 15
+    __win10toaster = ToastNotifier()
+
+    def __init__(self):
+        StoppedThread.__init__(self, self.RERUN_SECONDS)
+
+    def stoppedRun(self):
+        try:
+            if not self.__win10toaster.notification_active():
+                event: NotificationEvent = NotificationService.get().getFirstSavedEvent()
+                if event:
+                    event: NotificationEvent = event
+
+                    notifTitle: str = 'Godville следилка'
+                    notifMessage: str = ''
+                    for message in event.messages:
+                        if notifMessage:
+                            notifMessage += '\n'
+                        notifMessage += message
+                    
+                    self.__showNotification(notifTitle, notifMessage)
+        except Exception as error:
+            print (str(error))
+
+    def __showNotification(self, title: str, message: str) -> None:
+        if not self.__win10toaster.notification_active():
+            self.__win10toaster.show_toast(title, message, duration=self.RERUN_SECONDS, threaded=True)
