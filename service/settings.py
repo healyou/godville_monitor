@@ -56,7 +56,6 @@ class SettingsService(object):
     def loadSettings(self) -> List[ISetting]:
         return self.__loadSettingsFromFile()
 
-    # TODO - для каждой настройки должно быть своё место, чтобы при очередном сохранении только обновлять уже записанные данные
     # а сейчас всё пересаписывается
     def __saveSettingsToFile(self, settings: List[ISetting]):
         value: str = json.dumps(settings, cls=CustomJsonEncoder)

@@ -24,7 +24,6 @@ class NotificationItem(Enum):
         return self.value.mapper
 
 
-    # TODO - добавить описание параметров
     # Информация открытого API
     HERO_NAME = NotificationProperty('heroName', 'name', DefaultDictPropertyMapper(), True, 'description')
     GOD_NAME = NotificationProperty('godName', 'godname', DefaultDictPropertyMapper(), True, 'description')
@@ -77,7 +76,6 @@ class NotificationItem(Enum):
                 return item
         raise Exception('Элемент не найден')
 
-    # TODO - вынести куда-нибудь формирование текста для уведомления по изменённому свойству
     # Формирование информационного сообщения по изменённому свойству
     def configureChangeDisplayValue(item: NotificationItem, oldItem: IInfo, newItem: IInfo) -> str:
         oldPropValue = getattr(oldItem, item.propertyName)

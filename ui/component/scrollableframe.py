@@ -38,6 +38,9 @@ class VerticalScrolledFrame:
         self.outer_attr = set(dir(tk.Widget))
 
     def __getattr__(self, item):
+        if item == 'destroy':
+            self._unbind_mouse()
+
         if item in self.outer_attr:
             # geometry attributes etc (eg pack, destroy, tkraise) are passed on to self.outer
             return getattr(self.outer, item)

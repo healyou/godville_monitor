@@ -56,8 +56,7 @@ class NotificationEventBuilder(object):
                 oldPropValue = getattr(self.__oldItem, notifPropName)
                 newPropValue = getattr(self.__newItem, notifPropName)
 
-                # TODO - только изменённые свойства
-                if (oldPropValue == newPropValue):
+                if (oldPropValue != newPropValue):
                     if (self.__guiNotificationFilter.isNotificationCreate(notifItem)):
                         event: ChangePropertiesNotificationEvent = ChangePropertiesNotificationEvent(notifItem, oldPropValue, newPropValue)
                         notifications.append(event)

@@ -13,7 +13,7 @@ from datetime import datetime
 class SettingsView(ISettingsView):
     __presenter: ISettingsPresenter = None
     __root: Tk = None
-    __frame: Frame = None
+    __frame: VerticalScrolledFrame = None
     __checkSettingBooleanVars: Dict = {}
     __infoLabel: Label = None
 
@@ -27,7 +27,6 @@ class SettingsView(ISettingsView):
     def __initFrame(self):
         self.__clearChildrens()
 
-        # TODO - после добавления скролла, размер полей расчитывается относительно первого добавленого label-а
         self.__frame = VerticalScrolledFrame(self.__root, background="light gray", borderwidth=2, relief=SUNKEN)
         self.__frame.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
@@ -61,6 +60,8 @@ class SettingsView(ISettingsView):
         saveButton.pack(side=TOP, padx=5, pady=5)
 
     def __onBackClick(self):
+        # Надо, т.к. сам по себе на разбиживает эвенты
+        self.__frame._unbind_mouse()
         self.__presenter.backClick()
 
     def __onSaveSetingsClick(self):
