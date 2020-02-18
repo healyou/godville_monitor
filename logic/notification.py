@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 from enum import Enum
 from typing import List
+from threading import Lock
 
 from entity.entity import IInfo, OpenApiInfo, PrivateApiInfo
 from mapper.property_mappers import (AbstractDictPropertyMapper,
@@ -56,7 +57,7 @@ class NotificationEventBuilder(object):
                 oldPropValue = getattr(self.__oldItem, notifPropName)
                 newPropValue = getattr(self.__newItem, notifPropName)
 
-                if (oldPropValue != newPropValue):
+                if (oldPropValue == newPropValue):
                     if (self.__guiNotificationFilter.isNotificationCreate(notifItem)):
                         event: ChangePropertiesNotificationEvent = ChangePropertiesNotificationEvent(notifItem, oldPropValue, newPropValue)
                         notifications.append(event)
@@ -82,6 +83,37 @@ class ConsoleNotificationObserver(IObserver):
     def update(self, event: IEvent) -> None:
         if (isinstance(event, NotificationEvent)):
             print(event.messages)
+
+
+# Обработчик уведомлений с возможностью остановки работы
+class UiNotificationObserver(IObserver):
+    __mutex = Lock()
+    __uiObserver: IObserver = None
+
+    def __init__(self):
+        super(IObserver, self).__init__()
+
+    def setUiObserver(self, observer: IObserver):
+        self.__mutex.acquire()
+        try:
+            self.__uiObserver = observer
+        finally:
+            self.__mutex.release()
+
+    def clearUiObserver(self):
+        self.__mutex.acquire()
+        try:
+            self.__uiObserver = None
+        finally:
+            self.__mutex.release()
+
+    def update(self, event: IEvent) -> None:
+        if self.__uiObserver:
+            self.__mutex.acquire()
+            try:
+                self.__uiObserver.update(event)
+            finally:
+                self.__mutex.release()
 
 
 # Обработчик уведомлений при загрузке данных, который передаёт уведомления далее

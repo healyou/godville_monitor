@@ -55,7 +55,7 @@ class StoppedThread(object):
 
 # Загрузка данных годвиля
 class DataLoader(StoppedThread, IObservable):
-    RERUN_SECONDS = 15
+    RERUN_SECONDS = 60
 
     def __init__(self, godname: str = None, token: str = None):
         StoppedThread.__init__(self, self.RERUN_SECONDS)

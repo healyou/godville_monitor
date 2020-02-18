@@ -1,8 +1,8 @@
-from ui.application import Application
+from logic.session import Session
 
 
-app = Application()
-app.run()
+session: Session = Session.get()
+session.runMainThread()
 
 # Извините, не подумал… ) и правда, есть ведь и злые герои ) Заменю на что-нить другое…
 

@@ -1,12 +1,13 @@
 from __future__ import annotations
 from .loader import DataLoader, NotificationToaster
 from logic.observer import IObserver
-from logic.notification import NotificationObservableObserver, ConsoleNotificationObserver, LoadDataEvent
+from logic.notification import NotificationObservableObserver, ConsoleNotificationObserver, LoadDataEvent, UiNotificationObserver
 from typing import List
 from copy import deepcopy
 from win10toast import ToastNotifier
 from entity.settings import ISetting
 from service.settings import SettingsService
+from infi.systray import SysTrayIcon
 
 
 class Session(object):
@@ -16,12 +17,21 @@ class Session(object):
     __lastLoadDataEvent: LoadDataEvent = None
     __notificationToaster: NotificationToaster = None
     __userSettings: List[ISetting] = []
+    mainThread = None
+    systray: SysTrayIcon = None
+    __uiNotifObserver: UiNotificationObserver = None
 
     def __init__(self):
         pass
 
     def get() -> Session:
         return Session()
+
+    def runMainThread(self):
+        from ui.mainthread import ApplicationThread
+        self.mainThread = ApplicationThread()
+        self.mainThread.runCredential()
+        self.mainThread.run()
 
     # Реализация одиночки
     def __new__(cls):
@@ -50,21 +60,22 @@ class Session(object):
     def isLoadPrivateInfo(self) -> bool:
         return self.__token not in (None, '')
 
-    def startLoadData(self, observers: IObserver) -> None:
+    def startLoadData(self) -> None:
         if (self.__loader is None):
             self.__loader = DataLoader(self.__godName, self.__token)
+            self.__uiNotifObserver = UiNotificationObserver()
 
             notificationObsarvableObserver = NotificationObservableObserver()
             notificationObsarvableObserver.register(ConsoleNotificationObserver())
-            for observer in observers:
-                notificationObsarvableObserver.register(observer)
+            notificationObsarvableObserver.register(self.__uiNotifObserver)
             self.__loader.register(notificationObsarvableObserver)
 
             self.__loader.start()
 
             self.__startNotificationToaster()
-        else:
-            raise Exception('Загрузка данных уже работает')
+
+    def setUiNotificationObserver(self, observer: IObserver) -> None:
+        self.__uiNotifObserver.setUiObserver(observer)
 
     def stopLoadData(self) -> None:
         if (self.__loader is not None):
@@ -80,8 +91,20 @@ class Session(object):
     def getUserSettings(self) -> List[ISetting]:
         return self.__userSettings
 
+    def closeTkinter(self) -> None:
+        self.__uiNotifObserver.clearUiObserver()
+        self.mainThread.closeTkinter()
+
+    def openInfo(self) -> None:
+        self.mainThread.runInfo()
+
+    def quitAppFromSysTray(self) -> None:
+        self.stopLoadData()
+        self.mainThread.runCredential()
+
     def quit(self) -> None:
         self.stopLoadData()
+        self.mainThread.quit()
 
     def __startNotificationToaster(self) -> None:
         self.__notificationToaster = NotificationToaster()

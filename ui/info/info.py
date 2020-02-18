@@ -8,7 +8,7 @@ from logic.notification import IEvent, NotificationEvent, LoadDataEvent, LoadErr
 from logic.notification_items import NotificationItem
 from ui.component.scrollableframe import VerticalScrolledFrame
 from logic.filter import GuiPropNotificationFilter
-from ui.application import Application
+from infi.systray import SysTrayIcon
 
 
 class InfoView(IInfoView):
@@ -85,6 +85,9 @@ class InfoPresenter(IInfoPresenter, IObserver):
         self.__view = view
 
         self.__firstNotif: bool = True
+        if Session.get().systray:
+            Session.get().systray.shutdown()
+            Session.get().systray = None
 
     def backClick(self) -> None:
         Session.get().stopLoadData()
@@ -117,7 +120,8 @@ class InfoPresenter(IInfoPresenter, IObserver):
             self.__view.showLoadDataInfo(message)
 
     def afterInitView(self) -> None:
-        Session.get().startLoadData([self])
+        Session.get().startLoadData()
+        Session.get().setUiNotificationObserver(self)
         lastLoadData: LoadDataEvent = Session.get().getLastLoadData()
         if (lastLoadData is not None):
             self.__initFirstLoadData(lastLoadData)
@@ -148,12 +152,15 @@ class InfoPresenter(IInfoPresenter, IObserver):
         # Application.get().closeTkinter()
 
         # TODO - при создании нового экземпляра приложения нельзя создать его к текущему потоку - надо как-то подцепиться к главному потоку
-        # from infi.systray import SysTrayIcon
-        # def say_hello(systray):
-        #     Application.createForTray()
-        # def on_quit_callback(systray):
-        #     # Application.get().quitFromSysTray()
-        #     pass
-        # menu_options = (('Развернуть', None, say_hello),)
-        # systray = SysTrayIcon("python.ico", 'Godville следилка', menu_options, on_quit=on_quit_callback)
-        # systray.start()
+        def say_hello(systray):
+            Session.get().openInfo()
+        def on_quit_callback(systray):
+            # TODO - сюда заходит каждый раз, когда закрывается трей и надо как-то закрыть ui только в нужный момент
+            Session.get().quitAppFromSysTray()
+
+        Session.get().closeTkinter()
+
+        menu_options = (('Развернуть', None, say_hello),)
+        systray = SysTrayIcon("python.ico", 'Godville следилка', menu_options, on_quit=on_quit_callback)
+        Session.get().systray = systray
+        systray.start()
