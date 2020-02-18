@@ -83,11 +83,8 @@ class InfoPresenter(IInfoPresenter, IObserver):
         IInfoPresenter.__init__(self)
         IObserver.__init__(self)
         self.__view = view
-
         self.__firstNotif: bool = True
-        if Session.get().systray:
-            Session.get().systray.shutdown()
-            Session.get().systray = None
+        Session.get().closeSysTray()
 
     def backClick(self) -> None:
         Session.get().stopLoadData()
@@ -148,19 +145,4 @@ class InfoPresenter(IInfoPresenter, IObserver):
         return f'Время последнего обновления {openMessage} данных {str(loadDate)}'
 
     def trayClick(self, root):
-        pass
-        # Application.get().closeTkinter()
-
-        # TODO - при создании нового экземпляра приложения нельзя создать его к текущему потоку - надо как-то подцепиться к главному потоку
-        def say_hello(systray):
-            Session.get().openInfo()
-        def on_quit_callback(systray):
-            # TODO - сюда заходит каждый раз, когда закрывается трей и надо как-то закрыть ui только в нужный момент
-            Session.get().quitAppFromSysTray()
-
-        Session.get().closeTkinter()
-
-        menu_options = (('Развернуть', None, say_hello),)
-        systray = SysTrayIcon("python.ico", 'Godville следилка', menu_options, on_quit=on_quit_callback)
-        Session.get().systray = systray
-        systray.start()
+        Session.get().openSysTray()

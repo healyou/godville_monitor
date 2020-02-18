@@ -1,18 +1,15 @@
 from tkinter import *
-from logic.session import Session
 from tkinter import messagebox
+from typing import Callable
 
 
-class Application(object):
+# Создание и запуск tkinter ui
+class TkinterApplication(object):
     __root: Tk = None
+    __quitListener: Callable[[], None] = None
 
-    # Реализация одиночки
-    # def __new__(cls):
-    #     if not hasattr(cls, 'instance'):
-    #         cls.instance = super(Application, cls).__new__(cls)
-    #     return cls.instance
-
-    def __init__(self, credential: bool):
+    def __init__(self, credential: bool, quitListener: Callable[[], None]):
+        self.__quitListener = quitListener
         self.__root = Tk()
         self.__root.geometry('640x480')
         self.__root.title('Godville следилка')
@@ -24,13 +21,18 @@ class Application(object):
             from .info.info import InfoView
             self.__view = InfoView(self.__root)
 
+    # Полное завершение работы приложения - для полного listener
     def quit(self):
         if messagebox.askokcancel('Выход', 'Вы действительно хотите выйти?'):
-            Session.get().quit()
+            if self.__quitListener:
+                self.__quitListener()
             self.destroy()
 
+    # Завершение только gui tkinter
     def destroy(self):
-        self.__root.destroy()
+        if self.__root:
+            self.__root.destroy()
+            self.__root = None
 
     def run(self):
         if (not self.isStarted()):

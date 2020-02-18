@@ -8,6 +8,7 @@ from win10toast import ToastNotifier
 from entity.settings import ISetting
 from service.settings import SettingsService
 from infi.systray import SysTrayIcon
+from ui.mainthread import ApplicationThread
 
 
 class Session(object):
@@ -17,9 +18,9 @@ class Session(object):
     __lastLoadDataEvent: LoadDataEvent = None
     __notificationToaster: NotificationToaster = None
     __userSettings: List[ISetting] = []
-    mainThread = None
-    systray: SysTrayIcon = None
+    __mainTkinterThread: ApplicationThread = None
     __uiNotifObserver: UiNotificationObserver = None
+    __systray: SysTrayIcon = None
 
     def __init__(self):
         pass
@@ -27,11 +28,12 @@ class Session(object):
     def get() -> Session:
         return Session()
 
-    def runMainThread(self):
+    # Запуск потока работы ui
+    def runTkinterCredentional(self):
         from ui.mainthread import ApplicationThread
-        self.mainThread = ApplicationThread()
-        self.mainThread.runCredential()
-        self.mainThread.run()
+        self.__mainTkinterThread = ApplicationThread(self.quit)
+        self.__mainTkinterThread.runCredential()
+        self.__mainTkinterThread.run()
 
     # Реализация одиночки
     def __new__(cls):
@@ -93,19 +95,37 @@ class Session(object):
 
     def closeTkinter(self) -> None:
         self.__uiNotifObserver.clearUiObserver()
-        self.mainThread.closeTkinter()
+        self.__mainTkinterThread.closeTkinterAndWait()
 
     def openInfo(self) -> None:
-        self.mainThread.runInfo()
+        self.__mainTkinterThread.runInfo()
 
     def quitAppFromSysTray(self) -> None:
         self.stopLoadData()
-        self.mainThread.runCredential()
+        self.__mainTkinterThread.runCredential()
 
     def quit(self) -> None:
         self.stopLoadData()
-        self.mainThread.quit()
+        self.__mainTkinterThread.quitTkAndThread()
 
     def __startNotificationToaster(self) -> None:
         self.__notificationToaster = NotificationToaster()
         self.__notificationToaster.start()
+
+    # Сворачивание приложения в трей (tkinter off, но поток чтения работает)
+    def openSysTray(self):
+        def sysTrayInfoOpenClick(systray):
+            self.openInfo()
+        def sysTrayQuitCallback(systray):
+            self.quitAppFromSysTray()
+
+        self.closeTkinter()
+        menu_options = (('Развернуть', None, sysTrayInfoOpenClick),)
+        self.__systray = SysTrayIcon("python.ico", 'Godville следилка', menu_options, on_quit=sysTrayQuitCallback)
+        self.__systray.start()
+
+    # Завершение работы трея, если он был включен
+    def closeSysTray(self):
+        if self.__systray:
+            self.__systray.shutdown()
+            self.__systray = None
