@@ -100,10 +100,12 @@ class Session(object):
     def openInfo(self) -> None:
         self.__mainTkinterThread.runInfo()
 
+    # Открытие tkinter, если хотим выйти из приложения в трее
     def quitAppFromSysTray(self) -> None:
         self.stopLoadData()
         self.__mainTkinterThread.runCredential()
 
+    # Завершение работы приложения
     def quit(self) -> None:
         self.stopLoadData()
         self.__mainTkinterThread.quitTkAndThread()
