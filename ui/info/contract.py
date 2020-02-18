@@ -32,3 +32,6 @@ class IInfoPresenter(metaclass=ABCMeta):
     @abstractmethod
     def afterInitView(self) -> None:
         pass
+    @abstractmethod
+    def trayClick(self) -> None:
+        pass

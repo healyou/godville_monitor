@@ -19,8 +19,8 @@ class StoppedThread(object):
 
     def stop(self):
         if (self.__timer is not None):
-            self.__timer.cancel()
             self.__stop.set()
+            self.__timer.cancel()
   
     # see isAlive для проверки выполнения работы потока
     def isStopped(self) -> bool: 
@@ -45,8 +45,8 @@ class StoppedThread(object):
 
     def stop(self):
         if (self.__timer is not None):
-            self.__timer.cancel()
             self.__stop.clear()
+            self.__timer.cancel()
 
     @abstractmethod
     def stoppedRun():

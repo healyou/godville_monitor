@@ -8,6 +8,7 @@ from logic.notification import IEvent, NotificationEvent, LoadDataEvent, LoadErr
 from logic.notification_items import NotificationItem
 from ui.component.scrollableframe import VerticalScrolledFrame
 from logic.filter import GuiPropNotificationFilter
+from ui.application import Application
 
 
 class InfoView(IInfoView):
@@ -50,8 +51,14 @@ class InfoView(IInfoView):
         enterButton = Button(master=self.__frame, text='Назад', command=self.__onBackClick)
         enterButton.pack(side=TOP, padx=5, pady=5)
 
+        enterButton = Button(master=self.__frame, text='Свернуть в трей', command=self.__onTrayClick)
+        enterButton.pack(side=TOP, padx=5, pady=5)
+
     def __onBackClick(self):
         self.__presenter.backClick()
+
+    def __onTrayClick(self):
+        self.__presenter.trayClick(self.__root)
 
     def __clearChildrens(self):
         for widget in self.__root.winfo_children():
@@ -135,3 +142,18 @@ class InfoPresenter(IInfoPresenter, IObserver):
             openMessage = 'открытых'
         loadDate: datetime = loadDataEvent.loadDate
         return f'Время последнего обновления {openMessage} данных {str(loadDate)}'
+
+    def trayClick(self, root):
+        pass
+        # Application.get().closeTkinter()
+
+        # TODO - при создании нового экземпляра приложения нельзя создать его к текущему потоку - надо как-то подцепиться к главному потоку
+        # from infi.systray import SysTrayIcon
+        # def say_hello(systray):
+        #     Application.createForTray()
+        # def on_quit_callback(systray):
+        #     # Application.get().quitFromSysTray()
+        #     pass
+        # menu_options = (('Развернуть', None, say_hello),)
+        # systray = SysTrayIcon("python.ico", 'Godville следилка', menu_options, on_quit=on_quit_callback)
+        # systray.start()
